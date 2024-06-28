@@ -12,8 +12,8 @@ from types import MethodType
 from typing import Any, Dict, List, Optional, Tuple, Union
 import torch
 from transformers.models.bloom.modeling_bloom import BaseModelOutputWithPastAndCrossAttentions, BloomForCausalLM, BloomModel, CausalLMOutputWithCrossAttentions, CrossEntropyLoss
-from transformers.models.bloom.modeling_bloom import _expand_mask as _expand_mask_bloom
-from transformers.models.bloom.modeling_bloom import _make_causal_mask as _make_causal_mask_bloom
+# from transformers.models.bloom.modeling_bloom import _expand_mask as _expand_mask_bloom
+# from transformers.models.bloom.modeling_bloom import _make_causal_mask as _make_causal_mask_bloom
 from transformers.models.bloom.modeling_bloom import logging
 from transformers.models.gpt2.modeling_gpt2 import GPT2LMHeadModel
 from transformers.models.gpt_neo.modeling_gpt_neo import GPTNeoForCausalLM
@@ -127,14 +127,14 @@ def _convert_bloom_causal_lm_to_prefix_lm(model: BloomForCausalLM) -> BloomForCa
         combined_attention_mask = None
         device = attention_mask.device
         (_, src_length) = input_shape
-        if src_length > 1:
-            combined_attention_mask = _make_causal_mask_bloom(input_shape, device=device, past_key_values_length=past_key_values_length)
-            if bidirectional_mask is not None:
-                assert attention_mask.shape == bidirectional_mask.shape
-                expanded_bidirectional_mask = _expand_mask_bloom(bidirectional_mask, tgt_length=src_length)
-                combined_attention_mask = torch.logical_and(combined_attention_mask, expanded_bidirectional_mask)
-        expanded_attn_mask = _expand_mask_bloom(attention_mask, tgt_length=src_length)
-        combined_attention_mask = expanded_attn_mask if combined_attention_mask is None else expanded_attn_mask | combined_attention_mask
+        # if src_length > 1:
+        #     combined_attention_mask = _make_causal_mask_bloom(input_shape, device=device, past_key_values_length=past_key_values_length)
+            # if bidirectional_mask is not None:
+            #     assert attention_mask.shape == bidirectional_mask.shape
+            #     expanded_bidirectional_mask = _expand_mask_bloom(bidirectional_mask, tgt_length=src_length)
+            #     combined_attention_mask = torch.logical_and(combined_attention_mask, expanded_bidirectional_mask)
+        # expanded_attn_mask = _expand_mask_bloom(attention_mask, tgt_length=src_length)
+        # combined_attention_mask = expanded_attn_mask if combined_attention_mask is None else expanded_attn_mask | combined_attention_mask
         return combined_attention_mask
 
     def _build_alibi_tensor(self: BloomModel, batch_size: int, query_length: int, key_length: int, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
@@ -290,13 +290,13 @@ def _convert_opt_causal_lm_to_prefix_lm(model: OPTForCausalLM) -> OPTForCausalLM
                 combined_attention_mask = torch.zeros((bsz, 1, src_length, src_length + past_key_values_length), dtype=inputs_embeds.dtype, device=inputs_embeds.device)
             else:
                 combined_attention_mask = _make_causal_mask_opt(input_shape, inputs_embeds.dtype, past_key_values_length=past_key_values_length).to(inputs_embeds.device)
-                if self.bidirectional_mask is not None:
-                    assert attention_mask.shape == self.bidirectional_mask.shape
-                    expanded_bidirectional_mask = _expand_mask_opt(self.bidirectional_mask, inputs_embeds.dtype, tgt_len=input_shape[-1]).to(inputs_embeds.device)
-                    combined_attention_mask = torch.maximum(expanded_bidirectional_mask, combined_attention_mask)
-        if attention_mask is not None:
-            expanded_attn_mask = _expand_mask_opt(attention_mask, inputs_embeds.dtype, tgt_len=input_shape[-1]).to(inputs_embeds.device)
-            combined_attention_mask = expanded_attn_mask if combined_attention_mask is None else expanded_attn_mask + combined_attention_mask
+                # if self.bidirectional_mask is not None:
+                #     assert attention_mask.shape == self.bidirectional_mask.shape
+                #     expanded_bidirectional_mask = _expand_mask_opt(self.bidirectional_mask, inputs_embeds.dtype, tgt_len=input_shape[-1]).to(inputs_embeds.device)
+                #     combined_attention_mask = torch.maximum(expanded_bidirectional_mask, combined_attention_mask)
+        # if attention_mask is not None:
+        #     expanded_attn_mask = _expand_mask_opt(attention_mask, inputs_embeds.dtype, tgt_len=input_shape[-1]).to(inputs_embeds.device)
+        #     combined_attention_mask = expanded_attn_mask if combined_attention_mask is None else expanded_attn_mask + combined_attention_mask
         return combined_attention_mask
     setattr(model.model.decoder, '_prepare_decoder_attention_mask', MethodType(_prepare_decoder_attention_mask, model.model.decoder))
 
